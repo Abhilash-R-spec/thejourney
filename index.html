@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Prayer Gatherings of the Bible</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --parchment: #f5e6c8;
+  --parchment2: #ede0b4;
+  --ink: #2c1a0e;
+  --ink-light: #5c3d1e;
+  --accent: #c4520a;
+  --accent2: #8b1a1a;
+  --gold: #c9922a;
+  --gold-light: #e8c060;
+  --sea: #4a7fa5;
+  --sea-light: #7ab3d0;
+  --land: #d4b483;
+  --land2: #c9a96e;
+  --text-body: #3d2008;
+}
+
+body {
+  background: var(--ink);
+  font-family: 'Crimson Pro', serif;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* ── SPLASH ── */
+#splash {
+  position: fixed; inset: 0; z-index: 100;
+  background: radial-gradient(ellipse at center, #1a0a02 0%, #0a0500 100%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 24px;
+  transition: opacity 0.8s ease;
+}
+#splash.fade { opacity: 0; pointer-events: none; }
+
+.splash-flame { font-size: 64px; animation: flicker 2s ease-in-out infinite alternate; display: block; margin-bottom: 20px; }
+@keyframes flicker { 0% { filter: drop-shadow(0 0 12px #f5a623); transform: scale(1) rotate(-1deg); } 100% { filter: drop-shadow(0 0 28px #e8390e); transform: scale(1.06) rotate(1deg); } }
+
+.splash-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(26px, 7vw, 52px);
+  color: var(--gold-light);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+.splash-sub {
+  font-size: clamp(14px, 3.5vw, 18px);
+  color: #a8855a;
+  font-style: italic;
+  margin-bottom: 32px;
+  line-height: 1.5;
+  max-width: 400px;
+}
+.splash-btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: var(--parchment);
+  border: none;
+  padding: 14px 36px;
+  border-radius: 100px;
+  font-family: 'Cinzel', serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 4px 24px rgba(196,82,10,0.5);
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.splash-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(196,82,10,0.6); }
+
+/* ── MAIN LAYOUT ── */
+#main { position: fixed; inset: 0; display: flex; flex-direction: column; }
+
+/* ── HEADER ── */
+.header {
+  background: linear-gradient(180deg, #1a0a02, #120700);
+  border-bottom: 2px solid var(--gold);
+  padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0; z-index: 10;
+}
+.header-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(14px, 3.5vw, 20px);
+  color: var(--gold-light);
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+.header-sub { font-size: 11px; color: #8b6030; font-style: italic; margin-top: 2px; }
+.header-hint { font-size: 11px; color: #6b4820; text-align: right; line-height: 1.4; }
+
+/* ── MAP CONTAINER ── */
+#mapWrap {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  touch-action: pan-x pan-y;
+  cursor: grab;
+}
+#mapWrap:active { cursor: grabbing; }
+
+#mapCanvas {
+  position: absolute;
+  top: 0; left: 0;
+  transform-origin: 0 0;
+  transition: none;
+  user-select: none;
+}
+
+/* ── MAP SVG ── */
+#mapSvg {
+  display: block;
+}
+
+/* ── PINS ── */
+.pin-group { cursor: pointer; }
+.pin-pulse {
+  animation: pinPulse 2.2s ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes pinPulse { 0%,100%{opacity:0.5;transform:scale(1);} 50%{opacity:0.15;transform:scale(2.2);} }
+
+.pin-marker {
+  transition: transform 0.15s ease;
+  transform-origin: center bottom;
+}
+.pin-group:hover .pin-marker, .pin-group.active .pin-marker { transform: scale(1.25) translateY(-3px); }
+
+/* ── POPUP ── */
+#popup {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: linear-gradient(180deg, #1e0f04, #120800);
+  border-top: 2px solid var(--gold);
+  border-radius: 20px 20px 0 0;
+  padding: 0;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 50;
+  max-height: 55vh;
+  overflow: hidden;
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.6);
+}
+#popup.open { transform: translateY(0); }
+
+.popup-handle {
+  width: 36px; height: 4px;
+  background: var(--gold);
+  border-radius: 2px;
+  margin: 10px auto 0;
+  opacity: 0.4;
+}
+
+.popup-inner { padding: 14px 20px 24px; overflow-y: auto; max-height: calc(55vh - 30px); }
+
+.popup-location {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 4px;
+  display: flex; align-items: center; gap: 6px;
+}
+.popup-location::before { content: '📍'; font-size: 12px; }
+
+.popup-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(18px, 5vw, 26px);
+  color: var(--parchment);
+  font-weight: 600;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.popup-who {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.who-tag {
+  background: rgba(201,146,42,0.15);
+  border: 1px solid rgba(201,146,42,0.35);
+  border-radius: 100px;
+  padding: 3px 10px;
+  font-size: 11px;
+  color: var(--gold-light);
+  font-weight: 600;
+}
+
+.popup-desc {
+  font-size: 14px;
+  color: #c8a880;
+  line-height: 1.65;
+  margin-bottom: 14px;
+}
+
+.popup-verse {
+  background: rgba(201,146,42,0.1);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 8px 8px 0;
+  padding: 10px 14px;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--parchment2);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+.popup-verse cite { display: block; font-style: normal; font-size: 11px; color: var(--gold); font-weight: 600; margin-top: 4px; letter-spacing: 0.5px; }
+
+.popup-cta {
+  display: flex; gap: 10px; flex-wrap: wrap;
+}
+.cta-btn {
+  flex: 1; min-width: 120px;
+  padding: 11px 16px;
+  border-radius: 10px;
+  border: none;
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.18s;
+  -webkit-tap-highlight-color: transparent;
+  text-align: center;
+}
+.cta-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: var(--parchment);
+  box-shadow: 0 3px 12px rgba(196,82,10,0.4);
+}
+.cta-primary:hover { transform: translateY(-1px); }
+.cta-close {
+  background: rgba(255,255,255,0.06);
+  color: #8b6030;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ── STORY PAGE ── */
+#storyPage {
+  position: fixed; inset: 0;
+  background: var(--parchment);
+  z-index: 80;
+  transform: translateX(100%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#storyPage.open { transform: translateX(0); }
+
+.story-header {
+  background: linear-gradient(135deg, #1a0a02, #2c1408);
+  padding: 16px 20px 20px;
+  position: sticky; top: 0; z-index: 5;
+  border-bottom: 2px solid var(--gold);
+}
+
+.story-back {
+  background: none; border: none;
+  color: var(--gold-light);
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 10px;
+  padding: 4px 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.story-back::before { content: '←'; font-size: 16px; }
+
+.story-location-tag {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.story-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(20px, 5vw, 32px);
+  color: var(--parchment);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.story-body { padding: 24px 20px 60px; }
+
+/* graphic block */
+.story-graphic {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  position: relative;
+  background: linear-gradient(135deg, #1a0a02, #2c1408);
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border: 1px solid rgba(201,146,42,0.3);
+}
+
+.story-graphic-icon { font-size: 56px; margin-bottom: 12px; filter: drop-shadow(0 0 16px rgba(245,166,35,0.5)); }
+.story-graphic-label {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.story-graphic-quote {
+  font-size: clamp(15px, 4vw, 20px);
+  color: var(--parchment2);
+  font-style: italic;
+  line-height: 1.55;
+  max-width: 400px;
+}
+.story-graphic-ref {
+  font-size: 12px;
+  color: var(--gold-light);
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+.story-section { margin-bottom: 22px; }
+
+.story-section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.story-section-title::after { content: ''; flex: 1; height: 1px; background: rgba(196,82,10,0.25); }
+
+.story-text {
+  font-size: 16px;
+  color: var(--text-body);
+  line-height: 1.75;
+}
+.story-text strong { color: var(--accent2); font-weight: 600; }
+.story-text em { color: var(--ink-light); }
+
+.story-callout {
+  background: linear-gradient(135deg, #fff8ed, #fdf0d5);
+  border: 1px solid var(--gold-light);
+  border-left: 4px solid var(--gold);
+  border-radius: 0 12px 12px 0;
+  padding: 14px 16px;
+  margin: 16px 0;
+  font-size: 15px;
+  color: var(--text-body);
+  line-height: 1.6;
+  font-style: italic;
+}
+.story-callout cite { display: block; font-style: normal; font-size: 12px; color: var(--gold); font-weight: 600; margin-top: 6px; }
+
+.story-people {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.person-card {
+  background: #fff8ed;
+  border: 1px solid var(--parchment2);
+  border-radius: 12px;
+  padding: 12px 10px;
+  text-align: center;
+}
+.person-icon { font-size: 28px; margin-bottom: 6px; }
+.person-name { font-family: 'Cinzel', serif; font-size: 11px; color: var(--ink); font-weight: 600; margin-bottom: 3px; }
+.person-role { font-size: 10px; color: var(--ink-light); line-height: 1.3; }
+
+.story-for-you {
+  background: linear-gradient(135deg, #1a0a02, #2c1408);
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 24px;
+  border: 1px solid rgba(201,146,42,0.3);
+}
+.for-you-title {
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.for-you-text {
+  font-size: 15px;
+  color: var(--parchment2);
+  line-height: 1.7;
+}
+.for-you-text strong { color: var(--gold-light); }
+
+/* journey dots nav */
+.journey-nav {
+  position: fixed;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.j-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: rgba(201,146,42,0.25);
+  border: 1px solid rgba(201,146,42,0.4);
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.j-dot.active { background: var(--gold); box-shadow: 0 0 8px rgba(201,146,42,0.7); transform: scale(1.3); }
+
+/* legend */
+.map-legend {
+  position: fixed;
+  bottom: 16px;
+  left: 12px;
+  background: rgba(18, 8, 0, 0.85);
+  border: 1px solid rgba(201,146,42,0.3);
+  border-radius: 10px;
+  padding: 8px 12px;
+  z-index: 20;
+  font-size: 10px;
+  color: #8b6030;
+  line-height: 1.8;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+@media (max-width: 480px) {
+  .popup-inner { padding: 12px 16px 20px; }
+  .story-body { padding: 18px 16px 50px; }
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <span class="splash-flame">🔥</span>
+  <div class="splash-title">Prayer Gatherings<br>of the Bible</div>
+  <div class="splash-sub">From Moses in the wilderness to Paul in chains — every prayer gathering that shaped history. This is what your prayer cell is part of.</div>
+  <button class="splash-btn" onclick="enterMap()">Begin the Journey →</button>
+</div>
+
+<!-- MAIN -->
+<div id="main" style="display:none">
+  <div class="header">
+    <div>
+      <div class="header-title">Prayer Gatherings of the Bible</div>
+      <div class="header-sub">From Moses to Paul · The Known World · ~1400 BC – 62 AD</div>
+    </div>
+    <div class="header-hint">Tap any pin<br>to explore</div>
+  </div>
+
+  <div id="mapWrap">
+    <div id="mapCanvas">
+      <svg id="mapSvg" viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <!-- Journey nav dots -->
+  <div class="journey-nav" id="journeyNav"></div>
+
+  <!-- Legend -->
+  <div class="map-legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#c4520a"></div> NT gatherings</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#8b6914"></div> OT gatherings</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#8b1a1a"></div> Prison prayers</div>
+  </div>
+</div>
+
+<!-- POPUP -->
+<div id="popup">
+  <div class="popup-handle"></div>
+  <div class="popup-inner">
+    <div class="popup-location" id="popupLocation"></div>
+    <div class="popup-title" id="popupTitle"></div>
+    <div class="popup-who" id="popupWho"></div>
+    <div class="popup-desc" id="popupDesc"></div>
+    <div class="popup-verse" id="popupVerse"></div>
+    <div class="popup-cta">
+      <button class="cta-btn cta-primary" onclick="openStory()">📖 Read Full Story</button>
+      <button class="cta-btn cta-close" onclick="closePopup()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- STORY PAGE -->
+<div id="storyPage">
+  <div class="story-header">
+    <button class="story-back" onclick="closeStory()">Back to Map</button>
+    <div class="story-location-tag" id="storyLocation"></div>
+    <div class="story-title" id="storyTitle"></div>
+  </div>
+  <div class="story-body" id="storyBody"></div>
+</div>
+
+<script>
+// ── DATA ──
+const locations = [
+
+  // ══════════════════════════
+  //  OLD TESTAMENT ERA
+  // ══════════════════════════
+  {
+    id: "sinai",
+    name: "Moses & the 70 Elders",
+    city: "Mount Sinai / Wilderness",
+    type: "ot",
+    era: "OT",
+    x: 660, y: 300,
+    order: 1,
+    who: ["Moses", "Aaron", "Hur", "70 Elders"],
+    short: "Moses was burning out trying to carry a nation's spiritual life alone. God's answer was radical: share the load. He distributed His Spirit among 70 elders who then prophesied together — the first recorded shared leadership prayer gathering.",
+    verse: "I will take some of the power of the Spirit that is on you and put it on them. They will share the burden of the people with you so that you will not have to carry it alone.",
+    verseRef: "Numbers 11:17",
+    icon: "⛰️",
+    color: "#8b6914",
+    graphic: { icon: "🔥", label: "The Shared Burden", quote: "You cannot carry it alone. God never asked you to.", ref: "Numbers 11:17" },
+    story: {
+      what: "Moses was collapsing under the weight of leading a nation. His father-in-law Jethro had warned him: 'What you are doing is not good. You will only wear yourself out.' But it wasn't until the wilderness of Sinai that God stepped in directly — and His solution was a prayer cell.",
+      who: [
+        { icon: "🗻", name: "Moses", role: "Shepherd-turned-leader. Burning out. Told God: 'I cannot carry all these people by myself.'" },
+        { icon: "🙏", name: "Aaron", role: "Moses' brother. Held up his arms during battle when Moses grew tired. Partnership in prayer." },
+        { icon: "💪", name: "Hur", role: "Held Moses' other arm at Rephidim. Physical support as a model of spiritual support." },
+        { icon: "👥", name: "The 70 Elders", role: "Ordinary leaders who received the Spirit and prophesied. The first distributed prayer leadership." }
+      ],
+      body: "The remarkable moment at the tent of meeting was this: God took the Spirit that was on Moses — that same fire, that same anointing — and distributed it among 70 others. They all began to prophesy.\n\nTwo of the elders, Eldad and Medad, weren't even at the tent. They were still in the camp. And they prophesied too. Joshua wanted Moses to stop them. Moses' response is extraordinary: <strong>'Are you jealous for my sake? I wish that all the Lord's people were prophets and that the Lord would put his Spirit on them!'</strong>\n\nMoses wasn't threatened by others receiving what he had. He wanted it multiplied.",
+      foryou: "The shepherd who tries to carry everything alone will eventually collapse. <strong>Moses, the greatest leader in the Old Testament, needed 70 others.</strong> If you're running your prayer cell solo — follow-up, worship, prayer, preparation, everything — this story is God saying: share the load. Raise up others. The Spirit is not scarce."
+    }
+  },
+  {
+    id: "shiloh",
+    name: "Hannah's Desperate Prayer",
+    city: "Shiloh, Israel",
+    type: "ot",
+    era: "OT",
+    x: 622, y: 248,
+    order: 2,
+    who: ["Hannah", "Eli the Priest", "Elkanah"],
+    short: "Hannah was barren, mocked, heartbroken. She went to the temple and prayed so intensely that the priest thought she was drunk. No performance, no right words — just raw, honest desperation. God heard her. Samuel was born.",
+    verse: "In her deep anguish Hannah prayed to the Lord, weeping bitterly... I have been praying here out of my great anguish and grief.",
+    verseRef: "1 Samuel 1:10, 16",
+    icon: "💧",
+    color: "#8b6914",
+    graphic: { icon: "😭", label: "Honest Before God", quote: "She poured out her soul. Not performance. Not pretending. Just truth.", ref: "1 Samuel 1:15" },
+    story: {
+      what: "Hannah had everything except the one thing she wanted most. And the person who was supposed to comfort her — her husband — didn't understand. So she went to the one place she knew she could be completely honest: the house of God.",
+      who: [
+        { icon: "👩", name: "Hannah", role: "Barren, mocked by her rival Peninnah. Came to Shiloh year after year. Refused to pretend she was okay." },
+        { icon: "👴", name: "Eli the Priest", role: "Mistook her silent, intense prayer for drunkenness. Rebuked her — then blessed her when he understood." },
+        { icon: "💍", name: "Elkanah", role: "Her husband. Loved her but said: 'Am I not better to you than ten sons?' He missed the depth of her pain." }
+      ],
+      body: "What makes Hannah's prayer so powerful is what it was NOT. It wasn't eloquent. It wasn't performed. She moved her lips but no sound came out. She was so deep in her own grief that outward form had completely dissolved.\n\nEli's first reaction was to rebuke her: 'How long are you going to stay drunk? Put away your wine.' He was looking at the outside and completely misreading what was happening inside.\n\n<strong>This happens in prayer cells too.</strong> We judge the person who is messy, who cries without words, who can't articulate what they're feeling. But God was not watching Hannah's form. He was watching her heart.\n\nHer prayer was answered. Samuel was born — and he became the last judge and first kingmaker of Israel. The destiny of a nation was unlocked through one woman's unimpressive, tear-soaked prayer.",
+      foryou: "You don't need to pray right. You don't need the right words, the right posture, or the right amount of faith. <strong>Hannah just needed to be honest.</strong> If you come to prayer cell with nothing but grief and confusion — you're in exactly the right place. Bring what you actually have. God hears the unpolished prayer."
+    }
+  },
+  {
+    id: "jerusalem_walls",
+    name: "Nehemiah's Wall Prayer",
+    city: "Jerusalem",
+    type: "ot",
+    era: "OT",
+    x: 628, y: 258,
+    order: 3,
+    who: ["Nehemiah", "The Returned Exiles", "Ezra"],
+    short: "Nehemiah heard Jerusalem's walls were in ruins. Before making a plan, before speaking to the king, before organising anything — he sat down, wept, fasted and prayed for days. Then every action he took flowed from that prayer.",
+    verse: "When I heard these things, I sat down and wept. For some days I mourned and fasted and prayed before the God of heaven.",
+    verseRef: "Nehemiah 1:4",
+    icon: "🏛️",
+    color: "#8b6914",
+    graphic: { icon: "🧱", label: "Pray Before You Plan", quote: "He didn't start with strategy. He started with tears and fasting.", ref: "Nehemiah 1:4" },
+    story: {
+      what: "Nehemiah was a cupbearer to the king of Persia — a position of comfort and security. When he heard that Jerusalem's walls were destroyed and its people in disgrace, he could have stayed comfortable. Instead, he wept. For days.",
+      who: [
+        { icon: "🏗️", name: "Nehemiah", role: "Royal cupbearer. Wept for Jerusalem. Prayed before every major action. Rebuilt walls in 52 days." },
+        { icon: "👥", name: "The Returned Exiles", role: "People who had come back from Babylon to a ruined city. Demoralised, vulnerable, mocked by enemies." },
+        { icon: "📖", name: "Ezra the Scribe", role: "Led the spiritual renewal alongside Nehemiah. Read the Law while the people wept." }
+      ],
+      body: "Nehemiah 2:4 is one of the most remarkable verses in the Bible. The king asks him: 'What is it you want?' And the text says — in the middle of that conversation, with the king waiting — <strong>'I prayed to the God of heaven, and then I answered the king.'</strong>\n\nA silent, instantaneous arrow prayer. In the most high-pressure moment of his life, before answering the most powerful man in the world, Nehemiah prayed.\n\nAnd then he faced everything a leader faces: mockery from enemies, exhausted workers, internal conflict, financial exploitation, fear. And through all of it, his prayer journal is threaded: 'Remember me, my God.' 'Strengthen my hands.' 'Hear us, for we are despised.'\n\nThe walls were rebuilt in 52 days. The enemies were silenced. But the foundation was not the plan — it was the prayer.",
+      foryou: "Before your next hard conversation, your next exam, your next session you're afraid to lead — <strong>do what Nehemiah did: pray first, then act.</strong> Not prayer as a warm-up. Prayer as the source. Your prayer cell is not preparation for ministry. It IS the ministry."
+    }
+  },
+
+  // ══════════════════════════
+  //  NEW TESTAMENT ERA
+  // ══════════════════════════
+  {
+    id: "upper_room",
+    name: "The Upper Room",
+    city: "Jerusalem",
+    type: "nt",
+    era: "NT",
+    x: 618, y: 268,
+    order: 4,
+    who: ["The 120", "The Disciples", "Mary", "The Women"],
+    short: "120 people. 10 days. No programme, no speaker, no agenda. They just kept showing up and praying together. Then Pentecost — and 3,000 came to faith in one day. It all began here.",
+    verse: "They all joined together constantly in prayer, along with the women and Mary the mother of Jesus, and with his brothers.",
+    verseRef: "Acts 1:14",
+    icon: "✨",
+    color: "#9b59b6",
+    graphic: { icon: "🕊️", label: "The Origin of Everything", quote: "120 people. 10 days. No programme. Just prayer. Then the world changed.", ref: "Acts 1:14 – 2:4" },
+    story: {
+      what: "This is the prayer cell that started it all. Before any church was planted, before any missionary journey, before any letter was written — there was a room in Jerusalem. 120 people, gathered continuously in prayer for ten days.",
+      who: [
+        { icon: "👩", name: "Mary, Mother of Jesus", role: "Present in the Upper Room. Praying alongside disciples. The most extraordinary person in the most ordinary of gatherings." },
+        { icon: "🔑", name: "Peter", role: "Had denied Jesus three times weeks earlier. Now leading the group in prayer." },
+        { icon: "👥", name: "The 120", role: "Men and women, young and old, from different backgrounds. The most diverse prayer cell in history." },
+        { icon: "📖", name: "The Women", role: "Named first in Luke's account. The prayer cell was co-led by women from day one." }
+      ],
+      body: "Ten days of prayer with 120 people is not easy. That is showing up on day 3 when nothing has happened yet. Day 7 when you are tired and wondering if anything will come of it. They had no template. Jesus had simply told them to wait.\n\n<strong>Pentecost didn't happen on day 1.</strong> It happened after ten days. The disciples who waited longest received the most.\n\nAnd when the Spirit fell, it fell on all 120 — not just the inner circle. The women prophesied. Old men dreamed dreams. Young men saw visions. Peter preached and 3,000 people came to faith in one day.\n\nAll of it started in a prayer meeting that looked like nothing from the outside.",
+      foryou: "Your prayer cell might feel like days 3 through 9 right now. Nothing visible. Nothing spectacular. <strong>Keep showing up. Day 10 is coming.</strong> The Upper Room didn't produce Pentecost because the people were extraordinary. It produced Pentecost because they stayed."
+    }
+  },
+  {
+    id: "marys_house",
+    name: "Mary's House Prayer Cell",
+    city: "Jerusalem",
+    type: "nt",
+    era: "NT",
+    x: 630, y: 274,
+    order: 5,
+    who: ["Mary (John Mark's mother)", "Rhoda", "The Gathered Believers", "Peter"],
+    short: "Peter was in prison, awaiting execution. A group gathered in Mary's home and prayed through the night for him. An angel freed Peter — and when he knocked on the door, they were so shocked they thought it was a ghost. They had prayed for exactly this and barely believed it.",
+    verse: "Peter knocked at the outer entrance, and a servant named Rhoda came to answer the door. When she recognised Peter's voice, she was so overjoyed she ran back without opening it and exclaimed, 'Peter is at the door!'",
+    verseRef: "Acts 12:13-14",
+    icon: "🏠",
+    color: "#c4520a",
+    graphic: { icon: "⛓️", label: "Pray for the Absent", quote: "They prayed for Peter while he was in chains. He was free before they believed it.", ref: "Acts 12:12-16" },
+    story: {
+      what: "King Herod had just executed James. Now Peter was in prison, scheduled for the same fate. The church did the only thing it knew to do: it gathered at Mary's house and prayed. All night.",
+      who: [
+        { icon: "🏠", name: "Mary", role: "Mother of John Mark. Her home was a church. She opened it for night-long prayer when things were most dangerous." },
+        { icon: "😮", name: "Rhoda the Servant", role: "Heard Peter's voice at the door. Ran back inside with joy — and left him standing outside. Deeply human." },
+        { icon: "⛓️", name: "Peter", role: "Freed by an angel while the group prayed. When he arrived, they couldn't believe their own prayer had worked." },
+        { icon: "👥", name: "The Gathered Church", role: "Prayed earnestly. Then doubted the answer when it came. Honest, imperfect faith." }
+      ],
+      body: "This story is almost funny in its honesty. The group had been praying for Peter's release. An angel freed him. Peter went directly to Mary's house and knocked. Rhoda heard his voice, left him standing outside, and ran to tell the others.\n\nTheir response? <strong>'You're out of your mind.'</strong> Then: 'It must be his angel.'\n\nThey had prayed for exactly this — and when it happened, they didn't believe it. This is not a story of perfect faith producing a miracle. It is a story of imperfect, half-believing prayer that God honoured anyway.\n\nPeter kept knocking. When they finally opened the door and saw him, they were astonished. And Peter, after telling them what happened, slipped away into the night.",
+      foryou: "You don't need perfect faith for God to answer prayer. <strong>The group at Mary's house barely believed — and God freed Peter anyway.</strong> Come to prayer cell with your doubts. Pray the prayers you're not sure will work. Keep knocking. Answers sometimes arrive before we're ready to open the door."
+    }
+  },
+  {
+    id: "gethsemane",
+    name: "Jesus in Gethsemane",
+    city: "Mount of Olives, Jerusalem",
+    type: "nt",
+    era: "NT",
+    x: 624, y: 264,
+    order: 6,
+    who: ["Jesus", "Peter", "James", "John"],
+    short: "The night before the cross. Jesus took His closest disciples and asked them to keep watch while He prayed. He fell on His face and prayed: 'Not my will, but yours.' Three times. The disciples fell asleep. Even the inner circle failed Him. And He prayed alone.",
+    verse: "He fell with his face to the ground and prayed, 'My Father, if it is possible, may this cup be taken from me. Yet not as I will, but as you will.'",
+    verseRef: "Matthew 26:39",
+    icon: "🌿",
+    color: "#2c5f2e",
+    graphic: { icon: "🌙", label: "The Prayer That Cost Everything", quote: "Not my will, but yours. The hardest prayer ever prayed.", ref: "Matthew 26:39" },
+    story: {
+      what: "In the hours before His arrest, Jesus went to a garden called Gethsemane. He took His three closest friends and asked them to do one thing: stay awake and pray. He went further in to pray alone. What happened next is one of the most raw and honest moments in all of Scripture.",
+      who: [
+        { icon: "✝️", name: "Jesus", role: "Prayed with such intensity that His sweat was like drops of blood. Fully human, fully feeling the weight of what was coming." },
+        { icon: "😴", name: "Peter", role: "Promised he would never deny Jesus. Fell asleep during the most critical prayer hour." },
+        { icon: "⚡", name: "James & John", role: "The 'Sons of Thunder.' Asked for positions of honour. Couldn't stay awake for one hour of prayer." },
+        { icon: "👼", name: "An Angel", role: "Appeared and strengthened Jesus. When the disciples failed, God sent heaven's support instead." }
+      ],
+      body: "Jesus asked three times. The same prayer. 'Father, if possible, take this cup from me. Yet not my will, but yours.' He was not performing. He was not putting on a show of submission. <strong>He was genuinely wrestling.</strong>\n\nThree times He went back to the disciples and found them sleeping. His words to Peter are some of the most poignant in the Gospels: 'Couldn't you watch with me for one hour?'\n\nThis is the honest reality of the prayer cell. Even Jesus' closest companions — the ones who had been with Him for three years, who had seen miracles, who had heard the Transfiguration voice — fell asleep when He needed them most.\n\nAnd yet. He prayed anyway. He finished the prayer alone. He rose from that garden resolved, not defeated. The prayer had done its work in Him even without the support of His friends.",
+      foryou: "There will be times your prayer cell lets you down. Members who don't show. People who are distracted when you needed presence. <strong>Even Jesus experienced this.</strong> Don't let the failure of your group stop your personal prayer. Finish the prayer. Rise from the garden. The Father is still there even when everyone else is asleep."
+    }
+  },
+  {
+    id: "antioch",
+    name: "The Antioch Sending Prayer",
+    city: "Antioch, Syria",
+    type: "nt",
+    era: "NT",
+    x: 635, y: 175,
+    order: 7,
+    who: ["Paul", "Barnabas", "Simeon", "Lucius", "Manaen"],
+    short: "Five diverse leaders — including a childhood friend of King Herod and men from Africa — were worshipping and fasting together. The Holy Spirit spoke: 'Set apart Paul and Barnabas.' The first missionary journey was born in a prayer cell.",
+    verse: "While they were worshipping the Lord and fasting, the Holy Spirit said, 'Set apart for me Barnabas and Saul for the work to which I have called them.'",
+    verseRef: "Acts 13:2",
+    icon: "🔥",
+    color: "#c4520a",
+    graphic: { icon: "🙏", label: "The Sending Prayer", quote: "Five men. Fasting and worship. One voice from heaven. History changed.", ref: "Acts 13:3" },
+    story: {
+      what: "In Antioch, something unprecedented happened. A racially and socially diverse group of five leaders gathered regularly to worship, fast, and pray. Not for a specific agenda. Not to plan a mission. Just to seek God. And in that seeking, the first intentional mission to the Gentile world was born.",
+      who: [
+        { icon: "✡️", name: "Saul / Paul", role: "Former persecutor. Chosen by God for the Gentiles. Sent from this room." },
+        { icon: "🤝", name: "Barnabas", role: "The encourager. Vouched for Paul when nobody trusted him." },
+        { icon: "🌍", name: "Simeon (Niger)", role: "Believed to be from sub-Saharan Africa. This prayer cell was multiracial from the start." },
+        { icon: "📜", name: "Lucius of Cyrene", role: "From North Africa. Part of the diaspora community." },
+        { icon: "👑", name: "Manaen", role: "Grew up with Herod the tetrarch. Palace privilege laid down at the altar." }
+      ],
+      body: "What's most striking about Antioch is <strong>who was in the room</strong>. A former persecutor. An African. A palace-raised aristocrat. People who had no earthly reason to be in the same room were united around prayer and fasting.\n\nThe Holy Spirit did not speak in a grand conference of thousands. He spoke in a room of five people who were still enough, and hungry enough, to hear.\n\nThey didn't wait for a bigger platform. They didn't plan the mission and then ask God to bless it. They sought God — and He gave them the mission.",
+      foryou: "Your prayer cell might look like a random group with nothing obvious in common. <strong>Antioch looked the same — and it changed the world.</strong> The question is not who is in the room. It is whether you are still enough to hear when God speaks."
+    }
+  },
+  {
+    id: "philippi_river",
+    name: "The Riverside Prayer Meeting",
+    city: "Philippi, Macedonia",
+    type: "nt",
+    era: "NT",
+    x: 355, y: 122,
+    order: 8,
+    who: ["Paul", "Silas", "Lydia", "Women of Philippi"],
+    short: "No synagogue in the city. Paul went to the river — where people gathered to pray. He found a group of women already there. One of them, Lydia, opened her heart and immediately opened her home. The church of Philippi was born beside a river with no building and no plan.",
+    verse: "On the Sabbath we went outside the city gate to the river, where we expected to find a place of prayer. We sat down and began to speak to the women who had gathered there.",
+    verseRef: "Acts 16:13",
+    icon: "💧",
+    color: "#4a7fa5",
+    graphic: { icon: "🌊", label: "No Building Needed", quote: "A river bank. Some women. Two men who showed up. A church was born.", ref: "Acts 16:13" },
+    story: {
+      what: "Paul arrived in Philippi with no contacts, no building, no synagogue, no infrastructure. He had been guided here by a vision of a Macedonian man saying 'Come help us.' He came — and found women already praying by a river.",
+      who: [
+        { icon: "👔", name: "Lydia", role: "Dealer in purple cloth. Wealthy businesswoman. First convert in Europe. Immediately opened her home." },
+        { icon: "✍️", name: "Paul", role: "Came following a vision. Found not a man but women at prayer. Did not miss the moment." },
+        { icon: "🎵", name: "Silas", role: "Chose Macedonia with Paul over safety. Would later pray at midnight in chains in this same city." }
+      ],
+      body: "There is no perfect venue in this story. No chairs, no projector, no sound system. A river bank. Women who showed up to pray on a Saturday.\n\nThe text says: 'The Lord opened Lydia's heart to respond to Paul's message.' God did the inner work. Paul just showed up.\n\nLydia's first act of faith was immediate and practical: <strong>'Come and stay at my house.'</strong> She turned her home into the first church building in Europe. The prayer meeting at the river became a church. That church received one of the most personal letters Paul ever wrote — Philippians — years later.\n\n'I thank my God every time I remember you.' He was writing to the people he had met by a river with no plan.",
+      foryou: "No resources. No venue. No impressive setup. <strong>Philippi started with a river bank and some women who showed up.</strong> If you have a few people willing to gather and seek God — you have everything the first European church had."
+    }
+  },
+  {
+    id: "prison_philippi",
+    name: "The Midnight Prison Prayer",
+    city: "Prison, Philippi",
+    type: "prison",
+    era: "NT",
+    x: 368, y: 140,
+    order: 9,
+    who: ["Paul", "Silas", "The Prisoners", "The Jailer & Family"],
+    short: "Beaten, locked in the inner cell, feet in stocks at midnight. Paul and Silas chose to pray and sing — loud enough for every prisoner to hear. An earthquake opened every cell. The jailer came to faith. His whole family was baptised that night.",
+    verse: "About midnight Paul and Silas were praying and singing hymns to God, and the other prisoners were listening to them.",
+    verseRef: "Acts 16:25",
+    icon: "⛓️",
+    color: "#8b1a1a",
+    graphic: { icon: "🌙", label: "Midnight Prayer", quote: "Chains on their feet. Songs on their lips. No perfect conditions needed.", ref: "Acts 16:25" },
+    story: {
+      what: "This is the most powerful prayer meeting in Scripture. Beaten with rods, thrown in the innermost cell, feet locked in stocks — by any measure, this was rock bottom. Paul and Silas chose to pray and sing at midnight.",
+      who: [
+        { icon: "✍️", name: "Paul", role: "The same man who later wrote 'Rejoice always' — he wasn't writing theory. He was writing from experience." },
+        { icon: "🎶", name: "Silas", role: "Chose suffering alongside Paul over safety alone. Sang in chains in the dark." },
+        { icon: "👂", name: "The Other Prisoners", role: "Were listening. They hadn't asked to hear. But they heard anyway." },
+        { icon: "🏠", name: "The Jailer", role: "Whose entire family came to faith that night because of what he witnessed." }
+      ],
+      body: "The earthquake opened every cell. Every prisoner's chains fell off. When the jailer woke and saw the doors open, he drew his sword to kill himself — assuming everyone had escaped and his life was forfeit.\n\nPaul shouted: <strong>'Don't harm yourself! We are all here!'</strong>\n\nHe could have walked out free. Instead, he stayed. And that choice — staying when you could leave — was more powerful than the earthquake.\n\nThe jailer fell trembling before Paul and Silas and asked the question Paul had crossed the Aegean to hear: 'What must I do to be saved?'\n\nThat night, his whole household was baptised. By midnight, a family's eternity was changed — because two men chose to pray instead of despair.",
+      foryou: "You don't need a perfect venue. You don't need ideal conditions. You don't need to feel okay first. <strong>Paul and Silas prayed in chains at midnight.</strong> If you're in your worst season — show up to prayer cell. Pray from exactly where you are. The whole prison might be listening."
+    }
+  },
+  {
+    id: "corinth",
+    name: "The Corinth House Church",
+    city: "Corinth, Greece",
+    type: "nt",
+    era: "NT",
+    x: 322, y: 200,
+    order: 10,
+    who: ["Paul", "Aquila", "Priscilla", "Crispus", "Gaius"],
+    short: "Paul stayed 18 months — his longest stay anywhere. He was afraid when he arrived. God had to appear in a vision: 'Do not be afraid.' He lived with tentmakers, worked with his hands by day, and the church met in their home. A working-class house became Europe's most influential church.",
+    verse: "Do not be afraid; keep on speaking, do not be silent. For I am with you.",
+    verseRef: "Acts 18:9-10",
+    icon: "🏠",
+    color: "#c4520a",
+    graphic: { icon: "🏛️", label: "18 Months in Corinth", quote: "The most morally broken city in the world. Paul stayed longer here than anywhere.", ref: "Acts 18:11" },
+    story: {
+      what: "Corinth was famous throughout the ancient world for immorality — the Greek verb 'to Corinthianise' literally meant to live sexually immoral. And Paul chose to stay there longer than anywhere else. 18 months. He didn't avoid the hard place. He planted his flag there.",
+      who: [
+        { icon: "⚒️", name: "Aquila & Priscilla", role: "Tentmakers. Expelled from Rome by Emperor Claudius. Their ordinary home became an extraordinary church." },
+        { icon: "⚖️", name: "Crispus", role: "Leader of the synagogue. His conversion was seismic. He brought his whole household." },
+        { icon: "😰", name: "Paul", role: "Arrived afraid. Needed a vision from God to keep going. Even the greatest missionary knew fear." }
+      ],
+      body: "Paul's own words: 'I came to you in weakness, with great fear and trembling.' The man who had faced riots, beatings, and imprisonment arrived in Corinth afraid.\n\nGod's response in the vision is direct: 'Do not be afraid. Keep on speaking. Do not be silent. I am with you.'\n\n<strong>God didn't remove the fear. He told Paul to act in spite of it.</strong>\n\nThe church in Corinth was planted in a tentmaker's workshop by two people who made tents for a living. They had no theological training, no ministry building, no budget. Just a home and a willingness to host.\n\nFrom that home, letters were written that have shaped Christian thought for two thousand years.",
+      foryou: "You don't have to be fearless to lead a prayer cell. <strong>Paul was afraid in Corinth.</strong> God's answer was not 'I will remove your fear.' It was: 'I am with you. Keep going.' That is enough."
+    }
+  },
+  {
+    id: "ephesus",
+    name: "The School of Tyrannus",
+    city: "Ephesus, Asia Minor",
+    type: "nt",
+    era: "NT",
+    x: 490, y: 196,
+    order: 11,
+    who: ["Paul", "The 12 Disciples of John", "Apollos", "Students"],
+    short: "When the synagogue rejected him, Paul didn't give up — he found a lecture hall and held daily discussions for two years. Not weekly. Daily. The result: the entire province of Asia heard the gospel — because the people he discipled became missionaries themselves.",
+    verse: "This went on for two years, so that all the Jews and Greeks who lived in the province of Asia heard the word of the Lord.",
+    verseRef: "Acts 19:10",
+    icon: "📚",
+    color: "#8b4513",
+    graphic: { icon: "🏫", label: "Daily for 2 Years", quote: "He didn't hold weekly meetings. He went daily. For 730 days.", ref: "Acts 19:9-10" },
+    story: {
+      what: "Ephesus is the multiplication model. Paul didn't try to reach the whole province himself. He gathered a small group daily, went deep with them — and they spread outward to every city and village in Asia Minor.",
+      who: [
+        { icon: "📖", name: "Paul", role: "Discipled daily in a borrowed hall. Not a building he owned — a hall he borrowed." },
+        { icon: "💧", name: "The 12 Disciples", role: "Had only received John's baptism. Paul prayed over them — they received the Holy Spirit and spoke in tongues." },
+        { icon: "🌍", name: "The Province of Asia", role: "Never visited by Paul directly. Reached by the people he discipled in one lecture hall." }
+      ],
+      body: "The seven churches of Revelation — Ephesus, Smyrna, Pergamum, Thyatira, Sardis, Philadelphia, Laodicea — were all planted by people who sat in that lecture hall. Paul never went to most of them personally.\n\n<strong>He invested deeply in a few. They became the many.</strong>\n\nThis is the prayer cell model exactly. You don't have to reach your whole school, college, or workplace directly. You invest in the people God has given you — and they become carriers of what they received.",
+      foryou: "Daily is radical. Even showing up weekly consistently is more than most prayer cells manage. <strong>But what would change if you took personal prayer seriously enough to go daily?</strong> Not just prayer cell — your own time with God, every morning. That's what produced a movement that reached an entire province."
+    }
+  },
+  {
+    id: "troas",
+    name: "The All-Night Meeting",
+    city: "Troas, Asia Minor",
+    type: "nt",
+    era: "NT",
+    x: 468, y: 162,
+    order: 12,
+    who: ["Paul", "Eutychus", "The Disciples at Troas"],
+    short: "Paul was leaving the next day. They met to break bread. He preached until midnight — then kept going. A young man named Eutychus fell asleep in a window, fell three floors, and died. Paul raised him and kept preaching until dawn. Nobody wanted the night to end.",
+    verse: "Seated in a window was a young man named Eutychus, who was sinking into a deep sleep as Paul talked on and on.",
+    verseRef: "Acts 20:9",
+    icon: "🌙",
+    color: "#2c3e50",
+    graphic: { icon: "🕯️", label: "Until Dawn", quote: "Nobody wanted to leave. They talked until daylight.", ref: "Acts 20:11" },
+    story: {
+      what: "The Troas group knew Paul was leaving in the morning, never to return. So they gathered on Sunday evening to break bread and hear him one last time. Paul, knowing it too, kept speaking long after midnight.",
+      who: [
+        { icon: "😴", name: "Eutychus", role: "Fell asleep in the third-floor window, fell out, died — and was raised back to life by Paul. Then the meeting continued." },
+        { icon: "✍️", name: "Paul", role: "Preached so long someone died. Raised him. Kept preaching until sunrise." },
+        { icon: "👥", name: "The Troas Group", role: "Stayed all night. Nobody left. When dawn came, nobody was ready to say goodbye." }
+      ],
+      body: "This story is almost comedic — Paul preached so long that a young man fell asleep, fell out of the window, and died. Paul went down, embraced him, and declared him alive. Then went back upstairs and kept talking.\n\nBut underneath the drama is something deeply moving: <strong>nobody wanted to leave.</strong>\n\nPaul was going in the morning. This was their last night together. They ate together, prayed together, listened together, and stayed until the sun came up. When Eutychus was raised, they were not traumatised — the text says 'they were greatly comforted.'\n\nWhen was the last time your prayer cell went so long that dawn arrived before anyone was ready to leave?",
+      foryou: "Most prayer cells feel long after 45 minutes. Troas went all night — not because it was forced, but because <strong>something real was happening and nobody wanted to lose it.</strong> That's what you're building toward. Not longer sessions. Deeper ones."
+    }
+  },
+  {
+    id: "rome_prison",
+    name: "Paul in Roman Chains",
+    city: "Rome — Under House Arrest",
+    type: "prison",
+    era: "NT",
+    x: 178, y: 158,
+    order: 13,
+    who: ["Paul", "Epaphroditus", "Timothy", "Onesimus", "The Praetorian Guard"],
+    short: "Paul's final two years. Chained to a Roman guard 24 hours a day. Unable to travel. And from that cell he wrote Ephesians, Philippians, Colossians and Philemon — letters read by millions for 2,000 years. His most restricted season was his most fruitful.",
+    verse: "What has happened to me has actually served to advance the gospel... it has become clear throughout the whole palace guard and to everyone else that I am in chains for Christ.",
+    verseRef: "Philippians 1:12-13",
+    icon: "✍️",
+    color: "#8b1a1a",
+    graphic: { icon: "📜", label: "The Prison Letters", quote: "Chained to a guard. Writing words read by billions for 2,000 years.", ref: "Philippians 1:13" },
+    story: {
+      what: "Paul's Roman imprisonment is the end of his physical journey — and the beginning of his most enduring impact. Chained to a rotating series of Roman soldiers, unable to leave, he did the only things he could: pray, receive visitors, and write.",
+      who: [
+        { icon: "🤧", name: "Epaphroditus", role: "Came from Philippi with gifts. Got so ill he nearly died. Paul called him 'brother, fellow worker, fellow soldier.'" },
+        { icon: "📜", name: "Onesimus", role: "A runaway slave who found Paul in prison. Paul sent him back with the letter to Philemon: 'Receive him as you would receive me.'" },
+        { icon: "⚔️", name: "The Praetorian Guard", role: "Elite Roman soldiers chained to Paul in shifts. The whole palace guard heard the gospel by accident." }
+      ],
+      body: "'I have learned to be content in all circumstances.' Philippians 4:11 was written from a Roman prison. Not from a successful season. Not from a retreat. <strong>From chains.</strong>\n\nThe guards who were supposed to contain Paul ended up hearing about Christ. Some believed. The most effective evangelism of Paul's life happened when he couldn't move.\n\nFrom prison he wrote prayers for churches — Ephesians 1, Philippians 1, Colossians 1. He prayed more from confinement than he preached from freedom.",
+      foryou: "There will be seasons when you feel stuck. Limited. Confined. Unable to do what you used to do. <strong>Paul wrote four books of the Bible in that season.</strong> Don't waste your restricted season. Your most significant prayer life might be in your most limited circumstances."
+    }
+  }
+];
+
+// ── MAP RENDERING ──// ── MAP RENDERING ──
+const svg = document.getElementById('mapSvg');
+const W = 900, H = 560;
+
+function drawMap() {
+  // Sky gradient background
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  defs.innerHTML = `
+    <radialGradient id="skyGrad" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#1a3a5c"/>
+      <stop offset="100%" stop-color="#0a1a2e"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softglow">
+      <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  `;
+  svg.appendChild(defs);
+
+  // Background sea
+  const bg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  bg.setAttribute('width', W); bg.setAttribute('height', H);
+  bg.setAttribute('fill', 'url(#skyGrad)');
+  svg.appendChild(bg);
+
+  // Sea texture
+  for(let i = 0; i < 18; i++) {
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', 0); line.setAttribute('x2', W);
+    line.setAttribute('y1', 120+i*22); line.setAttribute('y2', 120+i*22);
+    line.setAttribute('stroke','rgba(74,127,165,0.12)'); line.setAttribute('stroke-width','1');
+    svg.appendChild(line);
+  }
+
+  // Land masses (Mediterranean region simplified)
+  const lands = [
+    // Italy
+    'M 100,60 L 180,60 L 200,100 L 210,140 L 190,170 L 175,190 L 160,165 L 150,140 L 130,120 L 110,90 Z',
+    // Greece / Balkans
+    'M 290,60 L 420,60 L 430,90 L 400,110 L 380,130 L 360,150 L 340,170 L 320,160 L 295,140 L 285,110 Z',
+    // Turkey/Asia Minor
+    'M 440,60 L 620,60 L 640,90 L 630,130 L 600,155 L 560,165 L 520,170 L 490,160 L 460,150 L 445,120 L 440,90 Z',
+    // Syria/Lebanon/Israel
+    'M 595,155 L 660,155 L 670,190 L 650,220 L 630,240 L 610,235 L 595,210 Z',
+    // Egypt/North Africa
+    'M 100,320 L 680,320 L 680,420 L 100,420 Z',
+    // North Africa coast
+    'M 80,240 L 700,240 L 700,320 L 80,320 Z',
+    // Cyprus
+    'M 545,195 L 585,195 L 590,210 L 570,218 L 548,210 Z',
+    // Crete
+    'M 355,255 L 460,255 L 465,270 L 440,278 L 380,275 L 355,265 Z',
+    // Rhodes
+    'M 490,220 L 510,220 L 514,238 L 496,240 Z',
+    // Sicily
+    'M 195,205 L 250,200 L 258,225 L 238,245 L 205,242 L 192,225 Z',
+    // Sardinia
+    'M 152,145 L 175,142 L 180,170 L 165,185 L 150,178 Z',
+    // Spain
+    'M 0,60 L 85,60 L 90,120 L 70,160 L 40,175 L 0,170 Z',
+  ];
+
+  lands.forEach(d => {
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', '#c9a96e');
+    path.setAttribute('stroke', '#a8844a');
+    path.setAttribute('stroke-width', '1.2');
+    svg.appendChild(path);
+  });
+
+  // Shore shading
+  lands.forEach(d => {
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', 'rgba(168,132,74,0.4)');
+    path.setAttribute('stroke-width', '4');
+    path.setAttribute('filter', 'url(#softglow)');
+    svg.insertBefore(path, svg.firstChild.nextSibling);
+  });
+
+  // Journey route
+  const routePoints = locations
+    .slice().sort((a,b) => a.order - b.order)
+    .map(l => `${l.x},${l.y}`);
+
+  // Dashed sea route
+  const seaRoute = document.createElementNS('http://www.w3.org/2000/svg','polyline');
+  seaRoute.setAttribute('points', routePoints.join(' '));
+  seaRoute.setAttribute('fill', 'none');
+  seaRoute.setAttribute('stroke', 'rgba(74,127,165,0.5)');
+  seaRoute.setAttribute('stroke-width', '1.5');
+  seaRoute.setAttribute('stroke-dasharray', '6,4');
+  svg.appendChild(seaRoute);
+
+  // Glow route
+  const glowRoute = document.createElementNS('http://www.w3.org/2000/svg','polyline');
+  glowRoute.setAttribute('points', routePoints.join(' '));
+  glowRoute.setAttribute('fill', 'none');
+  glowRoute.setAttribute('stroke', 'rgba(201,146,42,0.2)');
+  glowRoute.setAttribute('stroke-width', '4');
+  glowRoute.setAttribute('filter', 'url(#softglow)');
+  svg.appendChild(glowRoute);
+
+  // Region labels
+  const labels = [
+    { text: 'ITALIA', x: 155, y: 100 },
+    { text: 'GRAECIA', x: 335, y: 90 },
+    { text: 'ASIA MINOR', x: 530, y: 100 },
+    { text: 'MARE INTERNUM', x: 300, y: 290 },
+    { text: 'SYRIA', x: 640, y: 175 },
+    { text: 'AEGYPTUS', x: 620, y: 340 },
+    { text: 'MACEDONIA', x: 320, y: 72 },
+    { text: 'JUDAEA', x: 625, y: 255 },
+  ];
+  labels.forEach(l => {
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x', l.x); t.setAttribute('y', l.y);
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('fill', 'rgba(201,146,42,0.45)');
+    t.setAttribute('font-size', '8.5');
+    t.setAttribute('font-family', 'Cinzel, serif');
+    t.setAttribute('letter-spacing', '2');
+    t.textContent = l.text;
+    svg.appendChild(t);
+  });
+
+  // Draw pins
+  locations.forEach(loc => drawPin(loc));
+}
+
+function drawPin(loc) {
+  const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.setAttribute('class', `pin-group`);
+  g.setAttribute('data-id', loc.id);
+  g.style.cursor = 'pointer';
+
+  // Pulse ring
+  const pulse = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  pulse.setAttribute('cx', loc.x); pulse.setAttribute('cy', loc.y);
+  pulse.setAttribute('r', '14');
+  pulse.setAttribute('fill', 'none');
+  pulse.setAttribute('stroke', loc.color);
+  pulse.setAttribute('stroke-width', '2');
+  pulse.setAttribute('class', 'pin-pulse');
+  g.appendChild(pulse);
+
+  // Pin circle
+  const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  circle.setAttribute('cx', loc.x); circle.setAttribute('cy', loc.y);
+  circle.setAttribute('r', '13');
+  const fillColor = loc.type === 'prison' ? '#1a0505' : loc.era === 'OT' ? '#1a1000' : '#1a0a02';
+  circle.setAttribute('fill', fillColor);
+  circle.setAttribute('stroke', loc.color);
+  circle.setAttribute('stroke-width', '2');
+  circle.setAttribute('class', 'pin-marker');
+  circle.setAttribute('filter', 'url(#glow)');
+  g.appendChild(circle);
+
+  // Icon text
+  const icon = document.createElementNS('http://www.w3.org/2000/svg','text');
+  icon.setAttribute('x', loc.x); icon.setAttribute('y', loc.y + 5);
+  icon.setAttribute('text-anchor', 'middle');
+  icon.setAttribute('font-size', '13');
+  icon.textContent = loc.icon;
+  g.appendChild(icon);
+
+  // Order number
+  const num = document.createElementNS('http://www.w3.org/2000/svg','text');
+  num.setAttribute('x', loc.x + 11); num.setAttribute('y', loc.y - 10);
+  num.setAttribute('text-anchor', 'middle');
+  num.setAttribute('fill', loc.color);
+  num.setAttribute('font-size', '8');
+  num.setAttribute('font-family', 'Cinzel, serif');
+  num.setAttribute('font-weight', '700');
+  num.textContent = loc.order;
+  g.appendChild(num);
+
+  g.addEventListener('click', () => openPopup(loc.id));
+  svg.appendChild(g);
+}
+
+// ── MAP PAN/ZOOM ──
+let scale = 1, panX = 0, panY = 0;
+let isDragging = false, lastX = 0, lastY = 0;
+let startDist = 0, startScale = 1;
+
+const canvas = document.getElementById('mapCanvas');
+const wrap = document.getElementById('mapWrap');
+
+function setTransform() {
+  canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+}
+
+function fitMap() {
+  const W2 = wrap.offsetWidth, H2 = wrap.offsetHeight;
+  const svgW = 900, svgH = 560;
+  const scaleX = W2 / svgW, scaleY = H2 / svgH;
+  scale = Math.min(scaleX, scaleY) * 0.98;
+  panX = (W2 - svgW * scale) / 2;
+  panY = (H2 - svgH * scale) / 2;
+  canvas.style.transition = 'none';
+  setTransform();
+}
+
+wrap.addEventListener('mousedown', e => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
+window.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  panX += e.clientX - lastX; panY += e.clientY - lastY;
+  lastX = e.clientX; lastY = e.clientY;
+  setTransform();
+});
+window.addEventListener('mouseup', () => isDragging = false);
+
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? 0.9 : 1.1;
+  const rect = wrap.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  panX = mx - (mx - panX) * delta;
+  panY = my - (my - panY) * delta;
+  scale = Math.max(0.5, Math.min(3, scale * delta));
+  setTransform();
+}, { passive: false });
+
+// Touch
+wrap.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) { isDragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; }
+  else if (e.touches.length === 2) {
+    isDragging = false;
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    startDist = Math.sqrt(dx*dx + dy*dy);
+    startScale = scale;
+  }
+}, { passive: true });
+
+wrap.addEventListener('touchmove', e => {
+  if (e.touches.length === 1 && isDragging) {
+    panX += e.touches[0].clientX - lastX; panY += e.touches[0].clientY - lastY;
+    lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+    setTransform();
+  } else if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    scale = Math.max(0.5, Math.min(3, startScale * (dist / startDist)));
+    setTransform();
+  }
+}, { passive: true });
+
+wrap.addEventListener('touchend', () => isDragging = false);
+
+// ── POPUP ──
+let currentLocId = null;
+
+function openPopup(id) {
+  currentLocId = id;
+  const loc = locations.find(l => l.id === id);
+  const eraLabel = loc.era === 'OT' ? '📜 Old Testament' : loc.type === 'prison' ? '⛓️ Prison Prayer' : '✝️ New Testament';
+  document.getElementById('popupLocation').textContent = eraLabel + ' · ' + loc.city;
+  document.getElementById('popupTitle').textContent = loc.name;
+  const who = document.getElementById('popupWho');
+  who.innerHTML = loc.who.map(w => `<span class="who-tag">${w}</span>`).join('');
+  document.getElementById('popupDesc').textContent = loc.short;
+  document.getElementById('popupVerse').innerHTML = `"${loc.verse}"<cite>${loc.verseRef}</cite>`;
+  document.getElementById('popup').classList.add('open');
+
+  // Highlight pin
+  document.querySelectorAll('.pin-group').forEach(g => g.classList.remove('active'));
+  const pin = document.querySelector(`.pin-group[data-id="${id}"]`);
+  if (pin) pin.classList.add('active');
+
+  // Update journey dots
+  document.querySelectorAll('.j-dot').forEach(d => {
+    d.classList.toggle('active', d.dataset.id === id);
+  });
+}
+
+function closePopup() {
+  document.getElementById('popup').classList.remove('open');
+  document.querySelectorAll('.pin-group').forEach(g => g.classList.remove('active'));
+}
+
+// ── STORY PAGE ──
+function openStory() {
+  const loc = locations.find(l => l.id === currentLocId);
+  if (!loc) return;
+
+  const eraL = loc.era === 'OT' ? '📜 Old Testament · ' : '✝️ New Testament · ';
+  document.getElementById('storyLocation').textContent = eraL + loc.city;
+  document.getElementById('storyTitle').textContent = loc.name;
+
+  const body = document.getElementById('storyBody');
+  body.innerHTML = '';
+
+  // Graphic block
+  const gfx = loc.story.graphic || loc.graphic;
+  body.innerHTML += `
+    <div class="story-graphic">
+      <div class="story-graphic-icon">${gfx ? gfx.icon : loc.icon}</div>
+      <div class="story-graphic-label">${gfx ? gfx.label : 'The Story'}</div>
+      <div class="story-graphic-quote">${gfx ? gfx.quote : loc.short}</div>
+      <div class="story-graphic-ref">${gfx ? gfx.ref : loc.verseRef}</div>
+    </div>
+  `;
+
+  // What happened
+  body.innerHTML += `
+    <div class="story-section">
+      <div class="story-section-title">What Happened Here</div>
+      <div class="story-text">${loc.story.what}</div>
+    </div>
+  `;
+
+  // Key verse
+  body.innerHTML += `
+    <div class="story-callout">
+      "${loc.verse}"
+      <cite>${loc.verseRef}</cite>
+    </div>
+  `;
+
+  // Who was there
+  if (loc.story.who && loc.story.who.length) {
+    body.innerHTML += `
+      <div class="story-section">
+        <div class="story-section-title">Who Was In The Room</div>
+        <div class="story-people">
+          ${loc.story.who.map(p => `
+            <div class="person-card">
+              <div class="person-icon">${p.icon}</div>
+              <div class="person-name">${p.name}</div>
+              <div class="person-role">${p.role}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // Main body
+  const paras = loc.story.body.split('\n\n');
+  body.innerHTML += `
+    <div class="story-section">
+      <div class="story-section-title">The Deeper Story</div>
+      ${paras.map(p => `<div class="story-text" style="margin-bottom:14px">${p}</div>`).join('')}
+    </div>
+  `;
+
+  // For you section
+  body.innerHTML += `
+    <div class="story-for-you">
+      <div class="for-you-title">🔥 What This Means For Your Prayer Cell</div>
+      <div class="for-you-text">${loc.story.foryou}</div>
+    </div>
+  `;
+
+  document.getElementById('storyPage').classList.add('open');
+  document.getElementById('storyPage').scrollTop = 0;
+}
+
+function closeStory() {
+  document.getElementById('storyPage').classList.remove('open');
+}
+
+// ── JOURNEY NAV DOTS ──
+function buildJourneyNav() {
+  const nav = document.getElementById('journeyNav');
+  const sorted = [...locations].sort((a,b) => a.order - b.order);
+  sorted.forEach(loc => {
+    const dot = document.createElement('div');
+    dot.className = 'j-dot';
+    dot.dataset.id = loc.id;
+    dot.title = loc.name;
+    dot.addEventListener('click', () => {
+      openPopup(loc.id);
+      // Pan to location
+      const W2 = wrap.offsetWidth, H2 = wrap.offsetHeight;
+      panX = W2/2 - loc.x * scale;
+      panY = H2/2 - loc.y * scale;
+      canvas.style.transition = 'transform 0.6s ease';
+      setTransform();
+      setTimeout(() => canvas.style.transition = 'none', 700);
+    });
+    nav.appendChild(dot);
+  });
+}
+
+// ── INIT ──
+function enterMap() {
+  document.getElementById('splash').classList.add('fade');
+  setTimeout(() => {
+    document.getElementById('splash').style.display = 'none';
+    document.getElementById('main').style.display = 'flex';
+    svg.setAttribute('width', '900');
+    svg.setAttribute('height', '560');
+    drawMap();
+    fitMap();
+    buildJourneyNav();
+    window.addEventListener('resize', fitMap);
+  }, 800);
+}
+</script>
+</body>
+</html>
